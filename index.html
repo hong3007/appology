@@ -42,7 +42,7 @@
         h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 
         /* 1. 인증 화면 스타일 */
-        #auth-screen { z-index: 20; }
+        #auth-screen { z-index: 20; opacity: 1; visibility: visible;}
         .date-selectors { display: flex; flex-direction: column; gap: 15px; margin-bottom: 2rem; }
         .select-group { display: flex; justify-content: center; gap: 5px; }
         select {
@@ -57,16 +57,21 @@
 
         /* 2. 메인 사과 화면 스타일 (드래그) */
         #main-screen { display: none; z-index: 10; padding-top: 4rem; padding-bottom: 4rem;}
+        #drag-target-container {
+            width: 80px; height: 80px;
+            margin: 2rem auto;
+            position: relative; /* 자식 요소의 기준점 */
+        }
         #drag-target {
             width: 80px; height: 80px;
             background-color: #fce4ec; /* 연핑크 */
             border: 3px dashed var(--main-pink);
             border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            margin: 2rem auto;
-            position: relative; /* 드래그 핵심 */
             cursor: grab;
             font-weight: bold; color: var(--main-pink);
+            position: absolute;
+            top: 0; left: 0;
             z-index: 5;
             transition: transform 0.1s ease;
         }
@@ -138,7 +143,9 @@
         <h1>준영이의 마음을<br>결정해주세요!</h1>
         <p style="color: #888; font-size: 0.9rem; margin-bottom: 0;">(아래 핑크 원을 드래그해서 놓으세요)</p>
         
-        <div id="drag-target">준영</div>
+        <div id="drag-target-container">
+            <div id="drag-target">준영</div>
+        </div>
 
         <div class="drop-zones">
             <div id="zone-yes" class="drop-zone">예</div>
@@ -171,7 +178,7 @@
         populateSelects('birth', 1990, 2010);
         populateSelects('anni', 2015, 2026);
 
-        // --- 1. 인증 로직 ---
+        // --- 1. 인증 로직 (수정됨: 확인 시 사과 화면으로 이동) ---
         function checkDates() {
             const bY = document.getElementById('birth-year').value;
             const bM = document.getElementById('birth-month').value;
@@ -188,14 +195,17 @@
                 authScreen.style.visibility = 'hidden'; // 클릭 안 되게 숨김
                 setTimeout(() => {
                     authScreen.style.display = 'none';
-                    document.getElementById('main-screen').style.display = 'block';
+                    // 핵심 수정: 메인 사과 화면을 띄웁니다.
+                    const mainScreen = document.getElementById('main-screen');
+                    mainScreen.style.display = 'block';
+                    mainScreen.style.opacity = '1';
                 }, 400);
             } else {
                 alert("틀렸습니다!! 정답은 (98년 1월 22일) (24년 11월 3일)");
             }
         }
 
-        // --- 2. 드래그 앤 드롭 로직 (모바일/PC 통합) ---
+        // --- 2. 드래그 앤 드롭 로직 (모바일 최적화 수정) ---
         const dragTarget = document.getElementById('drag-target');
         const zoneYes = document.getElementById('zone-yes');
         const zoneNo = document.getElementById('zone-no');
@@ -203,15 +213,6 @@
 
         let isDragging = false;
         let startX, startY;
-        let initialX = 0, initialY = 0; // 초기 위치 저장을 위해 0으로 시작
-
-        // 초기 위치 정보를 저장하는 함수 (화면 로드 후 호출)
-        function setInitialPosition() {
-            const rect = dragTarget.getBoundingClientRect();
-            const parentRect = mainScreen.getBoundingClientRect();
-            initialX = rect.left - parentRect.left;
-            initialY = rect.top - parentRect.top;
-        }
 
         // 마우스/터치 시작
         function dragStart(e) {
@@ -240,6 +241,8 @@
                 currentY = e.clientY - startY;
             }
 
+            // 부모 컨테이너(`drag-target-container`) 내부에서만 움직이도록 제한하지 않고,
+            // 화면 전체로 자유롭게 드래그하도록 수정했습니다.
             dragTarget.style.left = currentX + 'px';
             dragTarget.style.top = currentY + 'px';
 
@@ -268,7 +271,9 @@
                 mainScreen.style.opacity = '0';
                 setTimeout(() => {
                     mainScreen.style.display = 'none';
-                    document.getElementById('final-screen').style.display = 'block';
+                    const finalScreen = document.getElementById('final-screen');
+                    finalScreen.style.display = 'block';
+                    finalScreen.style.opacity = '1';
                     // 고양이 띠용~ 애니메이션 트리거
                     const catImage = document.getElementById('cat-image');
                     catImage.classList.add('pop-in');
@@ -278,14 +283,14 @@
                     }, 300);
                 }, 400);
             } else {
-                // 실패: 제자리로
-                dragTarget.style.left = initialX + 'px';
-                dragTarget.style.top = initialY + 'px';
+                // 실패: 제자리로 (부모 컨테이너 기준으로 0,0 위치로 복귀)
+                dragTarget.style.left = '0px';
+                dragTarget.style.top = '0px';
                 zoneYes.classList.remove('hover');
             }
         }
 
-        // 두 요소가 겹치는지 확인하는 함수
+        // 두 요소가 겹치는지 확인하는 함수 (화면 좌표 기준)
         function isOverlapping(el1, el2) {
             const r1 = el1.getBoundingClientRect();
             const r2 = el2.getBoundingClientRect();
@@ -298,7 +303,7 @@
             const x = Math.random() * (window.innerWidth - padding * 2) + padding;
             const y = Math.random() * (window.innerHeight - padding * 2) + padding;
 
-            zoneNo.style.position = 'fixed';
+            zoneNo.style.position = 'fixed'; // 화면 전체에서 도망감
             zoneNo.style.left = x + 'px';
             zoneNo.style.top = y + 'px';
             zoneNo.style.margin = '0';
@@ -319,9 +324,6 @@
         dragTarget.addEventListener('mousedown', dragStart);
         window.addEventListener('mousemove', dragMove);
         window.addEventListener('mouseup', dragEnd);
-        
-        // 페이지 로드 후 초기 위치 설정
-        window.onload = setInitialPosition;
 
     </script>
 </body>

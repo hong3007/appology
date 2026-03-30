@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>준영이의 진심</title>
+    <title>준영이의 진심어린 사과</title>
     <style>
         :root {
             --bg-pink: #FFC0CB;
@@ -31,6 +31,7 @@
             width: 90%; max-width: 400px;
             position: absolute;
             transition: opacity 0.4s ease, visibility 0.4s ease;
+            opacity: 0; visibility: hidden; /* 처음에 모두 숨김 */
         }
 
         h1, h2 {
@@ -42,7 +43,7 @@
         h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 
         /* 1. 인증 화면 스타일 */
-        #auth-screen { z-index: 20; opacity: 1; visibility: visible;}
+        #auth-screen { z-index: 20; display: block; opacity: 1; visibility: visible;} /* 처음 활성화 */
         .date-selectors { display: flex; flex-direction: column; gap: 15px; margin-bottom: 2rem; }
         .select-group { display: flex; justify-content: center; gap: 5px; }
         select {
@@ -92,25 +93,48 @@
         /* 3. 최종 완료 화면 스타일 */
         #final-screen { display: none; z-index: 5; text-align: center; }
         
-        /* 고양이 이미지 스타일 */
+        /* 고양이 이미지 스타일 (수정됨) */
         #cat-image {
-            width: 150px; height: auto;
-            border-radius: 50%; /* 고양이를 동그랗게 */
-            border: 5px solid var(--main-pink);
-            display: none; /* 처음에 숨김 */
-            margin: 0 auto 1.5rem auto; /* 중앙 배치 및 아래 여백 */
+            width: 150px; /* 고양이 이미지 크기 */
+            height: auto;
             position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.1);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 중앙 배치 */
+            display: none; /* 초기 숨김 */
             opacity: 0;
-            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            z-index: 100; /* 다른 요소 위에 표시 */
+            pointer-events: none; /* 클릭 방지 */
         }
 
-        /* 띠용~ 애니메이션 효과 */
-        #cat-image.pop-in {
-            display: block;
-            transform: translate(-50%, -50%) scale(1.1); /* 약간 크게 튀어나옴 */
-            opacity: 1;
+        /* 킹받는 애니메이션 클래스 */
+        .cat-annoying-pop {
+            display: block !important;
+            animation: annoyingCatPop 1.8s ease-in-out forwards;
+        }
+
+        @keyframes annoyingCatPop {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+            5% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; } /* 잠시 뜸 */
+            10% { transform: translate(-50%, -50%) scale(0.5) translateX(-5px) rotate(-3deg); opacity: 1; } /* 팡! 튀어나옴 */
+            15% { transform: translate(-50%, -50%) scale(0.8) translateX(5px) rotate(3deg); } /* 흔들 흔들 */
+            20% { transform: translate(-50%, -50%) scale(1.0) translateX(-10px) rotate(-5deg); }
+            25% { transform: translate(-50%, -50%) scale(1.2) translateX(10px) rotate(5deg); } /* 확대 */
+            30% { transform: translate(-50%, -50%) scale(1.3) translateX(-15px) rotate(-7deg); }
+            35% { transform: translate(-50%, -50%) scale(1.4) translateX(15px) rotate(7deg); } /* 왕 확대 */
+            40% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
+            45% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
+            50% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
+            55% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
+            60% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
+            65% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
+            70% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
+            75% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
+            80% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
+            85% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); } /* 킹받는 흔들림 유지 */
+            90% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            95% { transform: translate(-50%, -50%) scale(1.0); opacity: 0; } /* 순식간에 페이드아웃 */
+            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; visibility: hidden; } /* 사라짐 */
         }
         
         #final-screen p { font-size: 1.1rem; line-height: 1.8; color: var(--text-gray); }
@@ -154,7 +178,7 @@
     </div>
 
     <div id="final-screen" class="container">
-        <img id="cat-image" src="cat.png" alt="고양이">
+        <img id="cat-image" src="cat.png" alt="킹받는 고양이">
         <h1>💖 사과 수락 완료 💖</h1>
         <p><strong>에옹아</strong> 사과 받아줘서<br>정말 고마워 (하트)</p>
         <p>에옹이 생일이랑 우리 기념일<br>절대로! 안잊어먹을게~~</p>
@@ -178,7 +202,7 @@
         populateSelects('birth', 1990, 2010);
         populateSelects('anni', 2015, 2026);
 
-        // --- 1. 인증 로직 (수정됨: 확인 시 사과 화면으로 이동) ---
+        // --- 1. 인증 로직 (수정됨: 인증 시 사과 화면으로 매끄럽게 이동) ---
         function checkDates() {
             const bY = document.getElementById('birth-year').value;
             const bM = document.getElementById('birth-month').value;
@@ -191,15 +215,16 @@
             if (bY === '1998' && bM === '1' && bD === '22' &&
                 aY === '2024' && aM === '11' && aD === '3') {
                 const authScreen = document.getElementById('auth-screen');
-                authScreen.style.opacity = '0';
-                authScreen.style.visibility = 'hidden'; // 클릭 안 되게 숨김
+                authScreen.style.opacity = '0'; // 부드럽게 숨김
+                authScreen.style.visibility = 'hidden'; 
+                
                 setTimeout(() => {
                     authScreen.style.display = 'none';
-                    // 핵심 수정: 메인 사과 화면을 띄웁니다.
                     const mainScreen = document.getElementById('main-screen');
                     mainScreen.style.display = 'block';
-                    mainScreen.style.opacity = '1';
-                }, 400);
+                    mainScreen.style.opacity = '1'; // 부드럽게 나타남
+                    mainScreen.style.visibility = 'visible';
+                }, 400); // transition 시간과 맞춤
             } else {
                 alert("틀렸습니다!! 정답은 (98년 1월 22일) (24년 11월 3일)");
             }
@@ -209,7 +234,6 @@
         const dragTarget = document.getElementById('drag-target');
         const zoneYes = document.getElementById('zone-yes');
         const zoneNo = document.getElementById('zone-no');
-        const mainScreen = document.getElementById('main-screen');
 
         let isDragging = false;
         let startX, startY;
@@ -241,7 +265,6 @@
                 currentY = e.clientY - startY;
             }
 
-            // 부모 컨테이너(`drag-target-container`) 내부에서만 움직이도록 제한하지 않고,
             // 화면 전체로 자유롭게 드래그하도록 수정했습니다.
             dragTarget.style.left = currentX + 'px';
             dragTarget.style.top = currentY + 'px';
@@ -259,7 +282,7 @@
             }
         }
 
-        // 마우스/터치 종료
+        // 마우스/터치 종료 (수정됨: 최종 완료 화면으로 이동하며 고양이 애니메이션 실행)
         function dragEnd(e) {
             isDragging = false;
             dragTarget.style.transition = 'all 0.3s ease'; // 제자리로 갈 땐 부드럽게
@@ -269,19 +292,19 @@
                 // 성공! 최종 화면으로
                 const mainScreen = document.getElementById('main-screen');
                 mainScreen.style.opacity = '0';
+                mainScreen.style.visibility = 'hidden';
+
                 setTimeout(() => {
                     mainScreen.style.display = 'none';
                     const finalScreen = document.getElementById('final-screen');
                     finalScreen.style.display = 'block';
                     finalScreen.style.opacity = '1';
-                    // 고양이 띠용~ 애니메이션 트리거
+                    finalScreen.style.visibility = 'visible';
+
+                    // 킹받는 고양이 띠용~ 애니메이션 트리거
                     const catImage = document.getElementById('cat-image');
-                    catImage.classList.add('pop-in');
-                    // 애니메이션 후 크기 유지
-                    setTimeout(() => {
-                         catImage.style.transform = 'translate(-50%, -50%) scale(1)';
-                    }, 300);
-                }, 400);
+                    catImage.classList.add('cat-annoying-pop'); // 애니메이션 클래스 추가
+                }, 400); // transition 시간과 맞춤
             } else {
                 // 실패: 제자리로 (부모 컨테이너 기준으로 0,0 위치로 복귀)
                 dragTarget.style.left = '0px';

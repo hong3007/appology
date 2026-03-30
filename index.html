@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>준영이의 진심어린 사과</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>준영이의 진심</title>
     <style>
         :root {
             --bg-pink: #FFC0CB;
@@ -18,10 +18,9 @@
             height: 100vh;
             font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
             overflow: hidden;
-            touch-action: none; /* 모바일 드래그 전용 */
+            touch-action: none;
         }
 
-        /* 공통 스타일: 카드 컨테이너 */
         .container {
             text-align: center;
             background: white;
@@ -30,147 +29,96 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             width: 90%; max-width: 400px;
             position: absolute;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-            opacity: 0; visibility: hidden; /* 처음에 모두 숨김 */
+            transition: opacity 0.3s ease;
         }
 
-        h1, h2 {
-            color: var(--main-pink);
-            line-height: 1.5;
-        }
+        /* 초기 상태 설정 */
+        #auth-screen { display: block; z-index: 30; opacity: 1; }
+        #main-screen { display: none; z-index: 20; opacity: 0; }
+        #final-screen { display: none; z-index: 10; opacity: 0; }
 
+        h1, h2 { color: var(--main-pink); line-height: 1.5; }
         h1 { font-size: 1.6rem; margin-bottom: 2rem; }
         h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
 
-        /* 1. 인증 화면 스타일 */
-        #auth-screen { z-index: 20; display: block; opacity: 1; visibility: visible;} /* 처음 활성화 */
         .date-selectors { display: flex; flex-direction: column; gap: 15px; margin-bottom: 2rem; }
         .select-group { display: flex; justify-content: center; gap: 5px; }
         select {
             padding: 10px; border: 2px solid #ddd; border-radius: 10px;
             font-size: 1rem; color: var(--text-gray);
-            appearance: none; -webkit-appearance: none; background: white;
+            background: white;
         }
         button#btn-auth {
             padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 10px;
             background-color: var(--main-pink); color: white; cursor: pointer;
         }
 
-        /* 2. 메인 사과 화면 스타일 (드래그) */
-        #main-screen { display: none; z-index: 10; padding-top: 4rem; padding-bottom: 4rem;}
-        #drag-target-container {
-            width: 80px; height: 80px;
-            margin: 2rem auto;
-            position: relative; /* 자식 요소의 기준점 */
-        }
+        /* 드래그 요소 */
+        #drag-target-container { width: 80px; height: 80px; margin: 2rem auto; position: relative; }
         #drag-target {
-            width: 80px; height: 80px;
-            background-color: #fce4ec; /* 연핑크 */
-            border: 3px dashed var(--main-pink);
-            border-radius: 50%;
+            width: 80px; height: 80px; background-color: #fce4ec;
+            border: 3px dashed var(--main-pink); border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            cursor: grab;
-            font-weight: bold; color: var(--main-pink);
-            position: absolute;
-            top: 0; left: 0;
-            z-index: 5;
-            transition: transform 0.1s ease;
+            cursor: grab; font-weight: bold; color: var(--main-pink);
+            position: absolute; top: 0; left: 0; z-index: 50;
         }
-        #drag-target:active { cursor: grabbing; scale: 1.05; }
 
-        .drop-zones { display: flex; justify-content: space-around; width: 100%; margin-top: 2rem; position: relative;}
+        .drop-zones { display: flex; justify-content: space-around; width: 100%; margin-top: 2rem; }
         .drop-zone {
-            width: 100px; height: 100px;
-            border-radius: 15px;
+            width: 100px; height: 100px; border-radius: 15px;
             display: flex; justify-content: center; align-items: center;
             font-size: 1.2rem; font-weight: bold; color: white;
-            transition: all 0.2s ease;
         }
-        #zone-yes { background-color: #81C784; border: 3px solid #66BB6A;}
-        #zone-no { background-color: #E57373; border: 3px solid #EF5350;}
-        .drop-zone.hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        #zone-yes { background-color: #81C784; border: 3px solid #66BB6A; }
+        #zone-no { background-color: #E57373; border: 3px solid #EF5350; }
 
-        /* 3. 최종 완료 화면 스타일 */
-        #final-screen { display: none; z-index: 5; text-align: center; }
-        
-        /* 고양이 이미지 스타일 (수정됨) */
+        /* 킹받는 고양이 애니메이션 */
         #cat-image {
-            width: 150px; /* 고양이 이미지 크기 */
-            height: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%); /* 중앙 배치 */
-            display: none; /* 초기 숨김 */
-            opacity: 0;
-            z-index: 100; /* 다른 요소 위에 표시 */
-            pointer-events: none; /* 클릭 방지 */
+            width: 200px; height: auto;
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            z-index: 100; opacity: 0; pointer-events: none;
         }
 
-        /* 킹받는 애니메이션 클래스 */
-        .cat-annoying-pop {
-            display: block !important;
-            animation: annoyingCatPop 1.8s ease-in-out forwards;
+        .cat-annoying {
+            animation: annoyingPop 2s ease-in-out forwards;
         }
 
-        @keyframes annoyingCatPop {
+        @keyframes annoyingPop {
             0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-            5% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; } /* 잠시 뜸 */
-            10% { transform: translate(-50%, -50%) scale(0.5) translateX(-5px) rotate(-3deg); opacity: 1; } /* 팡! 튀어나옴 */
-            15% { transform: translate(-50%, -50%) scale(0.8) translateX(5px) rotate(3deg); } /* 흔들 흔들 */
-            20% { transform: translate(-50%, -50%) scale(1.0) translateX(-10px) rotate(-5deg); }
-            25% { transform: translate(-50%, -50%) scale(1.2) translateX(10px) rotate(5deg); } /* 확대 */
-            30% { transform: translate(-50%, -50%) scale(1.3) translateX(-15px) rotate(-7deg); }
-            35% { transform: translate(-50%, -50%) scale(1.4) translateX(15px) rotate(7deg); } /* 왕 확대 */
-            40% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
-            45% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
-            50% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
-            55% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
-            60% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
-            65% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
-            70% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
-            75% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); }
-            80% { transform: translate(-50%, -50%) scale(1.5) translateX(-20px) rotate(-10deg); }
-            85% { transform: translate(-50%, -50%) scale(1.5) translateX(20px) rotate(10deg); } /* 킹받는 흔들림 유지 */
-            90% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
-            95% { transform: translate(-50%, -50%) scale(1.0); opacity: 0; } /* 순식간에 페이드아웃 */
-            100% { transform: translate(-50%, -50%) scale(0); opacity: 0; visibility: hidden; } /* 사라짐 */
+            10% { transform: translate(-50%, -50%) scale(1.2) rotate(-10deg); opacity: 1; }
+            20% { transform: translate(-50%, -50%) scale(1.5) rotate(10deg); }
+            30% { transform: translate(-50%, -50%) scale(1.8) rotate(-20deg); }
+            40% { transform: translate(-50%, -50%) scale(2.0) rotate(20deg); }
+            50% { transform: translate(-50%, -50%) scale(2.2) rotate(-30deg); }
+            60% { transform: translate(-50%, -50%) scale(2.5) rotate(30deg); }
+            80% { transform: translate(-50%, -50%) scale(2.5) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(3.0); opacity: 0; }
         }
-        
-        #final-screen p { font-size: 1.1rem; line-height: 1.8; color: var(--text-gray); }
-        #final-screen p strong { color: var(--main-pink); font-size: 1.2rem; }
-
     </style>
 </head>
 <body>
 
+    <img id="cat-image" src="cat.png" alt="고양이">
+
     <div id="auth-screen" class="container">
-        <h2>우리의 소중한 날짜들<br>(기억하니...?)</h2>
+        <h2>우리의 소중한 날짜들</h2>
         <div class="date-selectors">
             <p>에옹이의 생년월일</p>
-            <div class="select-group" id="birthday-selects">
-                <select id="birth-year"></select>
-                <select id="birth-month"></select>
-                <select id="birth-day"></select>
+            <div class="select-group">
+                <select id="birth-year"></select><select id="birth-month"></select><select id="birth-day"></select>
             </div>
             <p>우리가 만난 날</p>
-            <div class="select-group" id="anniversary-selects">
-                <select id="anni-year"></select>
-                <select id="anni-month"></select>
-                <select id="anni-day"></select>
+            <div class="select-group">
+                <select id="anni-year"></select><select id="anni-month"></select><select id="anni-day"></select>
             </div>
         </div>
         <button id="btn-auth" onclick="checkDates()">확인</button>
     </div>
 
     <div id="main-screen" class="container">
-        <h1>준영이의 마음을<br>결정해주세요!</h1>
-        <p style="color: #888; font-size: 0.9rem; margin-bottom: 0;">(아래 핑크 원을 드래그해서 놓으세요)</p>
-        
-        <div id="drag-target-container">
-            <div id="drag-target">준영</div>
-        </div>
-
+        <h1>준영이의 사과를<br>받아주시겠습니까?</h1>
+        <div id="drag-target-container"><div id="drag-target">준영</div></div>
         <div class="drop-zones">
             <div id="zone-yes" class="drop-zone">예</div>
             <div id="zone-no" class="drop-zone">아니오</div>
@@ -178,176 +126,92 @@
     </div>
 
     <div id="final-screen" class="container">
-        <img id="cat-image" src="cat.png" alt="킹받는 고양이">
         <h1>💖 사과 수락 완료 💖</h1>
-        <p><strong>에옹아</strong> 사과 받아줘서<br>정말 고마워 (하트)</p>
-        <p>에옹이 생일이랑 우리 기념일<br>절대로! 안잊어먹을게~~</p>
-        <p style="font-size: 1.5rem; margin-top: 1rem;">🙇‍♂️✨</p>
+        <p><strong>에옹아</strong> 사과 받아줘서 정말 고마워<br>생일이랑 기념일 절대로 안 잊을게!</p>
     </div>
 
     <script>
-        // --- 0. 날짜 드롭박스 초기화 ---
-        function populateSelects(idPrefix, startYear, endYear) {
-            const yearSelect = document.getElementById(idPrefix + '-year');
-            const monthSelect = document.getElementById(idPrefix + '-month');
-            const daySelect = document.getElementById(idPrefix + '-day');
-
-            for (let i = startYear; i <= endYear; i++) { yearSelect.options.add(new Option(i + '년', i)); }
-            for (let i = 1; i <= 12; i++) { monthSelect.options.add(new Option(i + '월', i)); }
-            for (let i = 1; i <= 31; i++) { daySelect.options.add(new Option(i + '일', i)); }
-            
-            // 초기값 설정 (정답 아님)
-            yearSelect.value = endYear - 1; monthSelect.value = 6; daySelect.value = 15;
+        // 드롭박스 생성
+        function fill(id, s, e) {
+            const el = document.getElementById(id);
+            for(let i=s; i<=e; i++) el.options.add(new Option(i+(id.includes('year')?'년':(id.includes('month')?'월':'일')), i));
         }
-        populateSelects('birth', 1990, 2010);
-        populateSelects('anni', 2015, 2026);
+        fill('birth-year', 1990, 2010); fill('birth-month', 1, 12); fill('birth-day', 1, 31);
+        fill('anni-year', 2015, 2026); fill('anni-month', 1, 12); fill('anni-day', 1, 31);
 
-        // --- 1. 인증 로직 (수정됨: 인증 시 사과 화면으로 매끄럽게 이동) ---
         function checkDates() {
-            const bY = document.getElementById('birth-year').value;
-            const bM = document.getElementById('birth-month').value;
-            const bD = document.getElementById('birth-day').value;
-            const aY = document.getElementById('anni-year').value;
-            const aM = document.getElementById('anni-month').value;
-            const aD = document.getElementById('anni-day').value;
-
-            // 정답 체크 (모두 문자열로 비교)
-            if (bY === '1998' && bM === '1' && bD === '22' &&
-                aY === '2024' && aM === '11' && aD === '3') {
-                const authScreen = document.getElementById('auth-screen');
-                authScreen.style.opacity = '0'; // 부드럽게 숨김
-                authScreen.style.visibility = 'hidden'; 
+            if(document.getElementById('birth-year').value == '1998' && 
+               document.getElementById('birth-month').value == '1' && 
+               document.getElementById('birth-day').value == '22' &&
+               document.getElementById('anni-year').value == '2024' && 
+               document.getElementById('anni-month').value == '11' && 
+               document.getElementById('anni-day').value == '3') {
                 
-                setTimeout(() => {
-                    authScreen.style.display = 'none';
-                    const mainScreen = document.getElementById('main-screen');
-                    mainScreen.style.display = 'block';
-                    mainScreen.style.opacity = '1'; // 부드럽게 나타남
-                    mainScreen.style.visibility = 'visible';
-                }, 400); // transition 시간과 맞춤
+                document.getElementById('auth-screen').style.display = 'none';
+                const main = document.getElementById('main-screen');
+                main.style.display = 'block';
+                setTimeout(() => main.style.opacity = '1', 50);
             } else {
                 alert("틀렸습니다!! 정답은 (98년 1월 22일) (24년 11월 3일)");
             }
         }
 
-        // --- 2. 드래그 앤 드롭 로직 (모바일 최적화 수정) ---
-        const dragTarget = document.getElementById('drag-target');
-        const zoneYes = document.getElementById('zone-yes');
-        const zoneNo = document.getElementById('zone-no');
+        const drag = document.getElementById('drag-target');
+        const yes = document.getElementById('zone-yes');
+        const no = document.getElementById('zone-no');
+        let isDraging = false;
+        let ox, oy;
 
-        let isDragging = false;
-        let startX, startY;
+        function moveNo() {
+            no.style.position = 'fixed';
+            no.style.left = Math.random() * (window.innerWidth - 100) + 'px';
+            no.style.top = Math.random() * (window.innerHeight - 100) + 'px';
+        }
 
-        // 마우스/터치 시작
-        function dragStart(e) {
-            isDragging = true;
-            dragTarget.style.transition = 'none'; // 드래그 중엔 애니메이션 끔
-            if (e.type === 'touchstart') {
-                startX = e.touches[0].clientX - dragTarget.offsetLeft;
-                startY = e.touches[0].clientY - dragTarget.offsetTop;
+        function start(e) {
+            isDraging = true;
+            const touch = e.touches ? e.touches[0] : e;
+            ox = touch.clientX - drag.offsetLeft;
+            oy = touch.clientY - drag.offsetTop;
+        }
+
+        function move(e) {
+            if(!isDraging) return;
+            e.preventDefault();
+            const touch = e.touches ? e.touches[0] : e;
+            drag.style.left = (touch.clientX - ox) + 'px';
+            drag.style.top = (touch.clientY - oy) + 'px';
+
+            const dr = drag.getBoundingClientRect();
+            const nr = no.getBoundingClientRect();
+            if(!(dr.right < nr.left || dr.left > nr.right || dr.bottom < nr.top || dr.top > nr.bottom)) moveNo();
+        }
+
+        function end() {
+            isDraging = false;
+            const dr = drag.getBoundingClientRect();
+            const yr = yes.getBoundingClientRect();
+            
+            if(!(dr.right < yr.left || dr.left > yr.right || dr.bottom < yr.top || dr.top > yr.bottom)) {
+                document.getElementById('main-screen').style.display = 'none';
+                const final = document.getElementById('final-screen');
+                final.style.display = 'block';
+                setTimeout(() => final.style.opacity = '1', 50);
+                
+                const cat = document.getElementById('cat-image');
+                cat.classList.add('cat-annoying');
             } else {
-                startX = e.clientX - dragTarget.offsetLeft;
-                startY = e.clientY - dragTarget.offsetTop;
+                drag.style.left = '0px'; drag.style.top = '0px';
             }
         }
 
-        // 마우스/터치 이동 (핵심)
-        function dragMove(e) {
-            if (!isDragging) return;
-            e.preventDefault(); // 스크롤 방지
-
-            let currentX, currentY;
-            if (e.type === 'touchmove') {
-                currentX = e.touches[0].clientX - startX;
-                currentY = e.touches[0].clientY - startY;
-            } else {
-                currentX = e.clientX - startX;
-                currentY = e.clientY - startY;
-            }
-
-            // 화면 전체로 자유롭게 드래그하도록 수정했습니다.
-            dragTarget.style.left = currentX + 'px';
-            dragTarget.style.top = currentY + 'px';
-
-            // '아니오' 버튼 피하기 (이동 시 즉시 체크)
-            if (isOverlapping(dragTarget, zoneNo)) {
-                moveNoButton();
-            }
-
-            // '예' 존 호버 효과
-            if (isOverlapping(dragTarget, zoneYes)) {
-                zoneYes.classList.add('hover');
-            } else {
-                zoneYes.classList.remove('hover');
-            }
-        }
-
-        // 마우스/터치 종료 (수정됨: 최종 완료 화면으로 이동하며 고양이 애니메이션 실행)
-        function dragEnd(e) {
-            isDragging = false;
-            dragTarget.style.transition = 'all 0.3s ease'; // 제자리로 갈 땐 부드럽게
-
-            // 겹침 확인
-            if (isOverlapping(dragTarget, zoneYes)) {
-                // 성공! 최종 화면으로
-                const mainScreen = document.getElementById('main-screen');
-                mainScreen.style.opacity = '0';
-                mainScreen.style.visibility = 'hidden';
-
-                setTimeout(() => {
-                    mainScreen.style.display = 'none';
-                    const finalScreen = document.getElementById('final-screen');
-                    finalScreen.style.display = 'block';
-                    finalScreen.style.opacity = '1';
-                    finalScreen.style.visibility = 'visible';
-
-                    // 킹받는 고양이 띠용~ 애니메이션 트리거
-                    const catImage = document.getElementById('cat-image');
-                    catImage.classList.add('cat-annoying-pop'); // 애니메이션 클래스 추가
-                }, 400); // transition 시간과 맞춤
-            } else {
-                // 실패: 제자리로 (부모 컨테이너 기준으로 0,0 위치로 복귀)
-                dragTarget.style.left = '0px';
-                dragTarget.style.top = '0px';
-                zoneYes.classList.remove('hover');
-            }
-        }
-
-        // 두 요소가 겹치는지 확인하는 함수 (화면 좌표 기준)
-        function isOverlapping(el1, el2) {
-            const r1 = el1.getBoundingClientRect();
-            const r2 = el2.getBoundingClientRect();
-            return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
-        }
-
-        // '아니오' 버튼 도망가게 하는 함수 (기존 로직 활용)
-        function moveNoButton() {
-            const padding = 80;
-            const x = Math.random() * (window.innerWidth - padding * 2) + padding;
-            const y = Math.random() * (window.innerHeight - padding * 2) + padding;
-
-            zoneNo.style.position = 'fixed'; // 화면 전체에서 도망감
-            zoneNo.style.left = x + 'px';
-            zoneNo.style.top = y + 'px';
-            zoneNo.style.margin = '0';
-        }
-
-        // '꼼수 쓰지 마세요 !!!' 처리 (클릭 시)
-        zoneNo.addEventListener('click', () => {
-            alert("꼼수 쓰지 마세요 !!!");
-            moveNoButton(); // 클릭 후에도 도망감
-        });
-
-
-        // 이벤트 리스너 등록
-        dragTarget.addEventListener('touchstart', dragStart);
-        window.addEventListener('touchmove', dragMove, { passive: false });
-        window.addEventListener('touchend', dragEnd);
-
-        dragTarget.addEventListener('mousedown', dragStart);
-        window.addEventListener('mousemove', dragMove);
-        window.addEventListener('mouseup', dragEnd);
-
+        drag.addEventListener('mousedown', start);
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        drag.addEventListener('touchstart', start);
+        window.addEventListener('touchmove', move, {passive: false});
+        window.addEventListener('touchend', end);
+        no.addEventListener('click', () => { alert("꼼수 쓰지 마세요 !!!"); moveNo(); });
     </script>
 </body>
 </html>

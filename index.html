@@ -3,109 +3,293 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>준영이의 사과</title>
+    <title>준영이의 진심</title>
     <style>
+        :root {
+            --bg-pink: #FFC0CB;
+            --main-pink: #D81B60;
+            --text-gray: #424242;
+        }
+
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #FFC0CB; /* 핑크색 배경 */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            margin: 0; padding: 0;
+            background-color: var(--bg-pink);
+            display: flex; justify-content: center; align-items: center;
             height: 100vh;
             font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
             overflow: hidden;
-            touch-action: manipulation;
+            touch-action: none; /* 모바일 드래그 전용 */
         }
 
+        /* 공통 스타일: 카드 컨테이너 */
         .container {
             text-align: center;
             background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            z-index: 10;
+            padding: 2.5rem 2rem;
+            border-radius: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            width: 90%; max-width: 400px;
+            position: absolute; /* 드래그 구현을 위해 fixed에서 변경 */
+            transition: opacity 0.4s ease;
         }
 
-        h1 {
-            color: #D81B60;
-            font-size: 1.5rem;
-            margin-bottom: 2rem;
-            line-height: 1.6;
+        h1, h2 {
+            color: var(--main-pink);
+            line-height: 1.5;
         }
 
-        .btn-group {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            position: relative;
-            height: 50px;
+        h1 { font-size: 1.6rem; margin-bottom: 2rem; }
+        h2 { font-size: 1.2rem; margin-bottom: 1.5rem; }
+
+        /* 1. 인증 화면 스타일 */
+        #auth-screen { z-index: 20; }
+        .date-selectors { display: flex; flex-direction: column; gap: 15px; margin-bottom: 2rem; }
+        .select-group { display: flex; justify-content: center; gap: 5px; }
+        select {
+            padding: 10px; border: 2px solid #ddd; border-radius: 10px;
+            font-size: 1rem; color: var(--text-gray);
+            appearance: none; -webkit-appearance: none; background: white;
+        }
+        button#btn-auth {
+            padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 10px;
+            background-color: var(--main-pink); color: white; cursor: pointer;
         }
 
-        button {
-            padding: 10px 25px;
-            font-size: 1.1rem;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
+        /* 2. 메인 사과 화면 스타일 (드래그) */
+        #main-screen { display: none; z-index: 10; padding-top: 4rem; padding-bottom: 4rem;}
+        #drag-target {
+            width: 80px; height: 80px;
+            background-color: #fce4ec; /* 연핑크 */
+            border: 3px dashed var(--main-pink);
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin: 2rem auto;
+            position: relative; /* 드래그 핵심 */
+            cursor: grab;
+            font-weight: bold; color: var(--main-pink);
+            z-index: 5;
+            transition: transform 0.1s ease;
+        }
+        #drag-target:active { cursor: grabbing; scale: 1.05; }
+
+        .drop-zones { display: flex; justify-content: space-around; width: 100%; margin-top: 2rem; position: relative;}
+        .drop-zone {
+            width: 100px; height: 100px;
+            border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem; font-weight: bold; color: white;
             transition: all 0.2s ease;
         }
+        #zone-yes { background-color: #81C784; /* 초록색 */ border: 3px solid #66BB6A;}
+        #zone-no { background-color: #E57373; /* 빨간색 */ border: 3px solid #EF5350;}
+        .drop-zone.hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 
-        #btn-yes {
-            background-color: #D81B60;
-            color: white;
-        }
+        /* 3. 최종 완료 화면 스타일 */
+        #final-screen { display: none; z-index: 5; text-align: center;}
+        #final-screen p { font-size: 1.1rem; line-height: 1.8; color: var(--text-gray); }
+        #final-screen p strong { color: var(--main-pink); font-size: 1.2rem; }
 
-        #btn-no {
-            background-color: #757575;
-            color: white;
-            position: absolute;
-            left: 50%;
-            margin-left: 10px; /* '예' 버튼 옆에 배치 */
-        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>준영이의 사과를<br>받아주시겠습니까?</h1>
-        <div class="btn-group">
-            <button id="btn-yes" onclick="accepted()">예</button>
-            <button id="btn-no">아니오</button>
+    <div id="auth-screen" class="container">
+        <h2>우리의 소중한 날짜들<br>(기억하니...?)</h2>
+        <div class="date-selectors">
+            <p>에옹이의 생년월일</p>
+            <div class="select-group" id="birthday-selects">
+                <select id="birth-year"></select>
+                <select id="birth-month"></select>
+                <select id="birth-day"></select>
+            </div>
+            <p>우리가 만난 날</p>
+            <div class="select-group" id="anniversary-selects">
+                <select id="anni-year"></select>
+                <select id="anni-month"></select>
+                <select id="anni-day"></select>
+            </div>
+        </div>
+        <button id="btn-auth" onclick="checkDates()">확인</button>
+    </div>
+
+    <div id="main-screen" class="container">
+        <h1>준영이의 마음을<br>결정해주세요!</h1>
+        <p style="color: #888; font-size: 0.9rem; margin-bottom: 0;">(아래 핑크 원을 드래그해서 놓으세요)</p>
+        
+        <div id="drag-target">준영</div>
+
+        <div class="drop-zones">
+            <div id="zone-yes" class="drop-zone">예</div>
+            <div id="zone-no" class="drop-zone">아니오</div>
         </div>
     </div>
 
-    <script>
-        const btnNo = document.getElementById('btn-no');
-        const btnYes = document.getElementById('btn-yes');
+    <div id="final-screen" class="container">
+        <h1>💖 사과 수락 완료 💖</h1>
+        <p><strong>에옹아</strong> 사과 받아줘서<br>정말 고마워 (하트)</p>
+        <p>에옹이 생일이랑 우리 기념일<br>절대로! 안잊어먹을게~~</p>
+        <p style="font-size: 1.5rem; margin-top: 1rem;">🙇‍♂️✨</p>
+    </div>
 
-        function moveButton() {
-            // 화면 너비와 높이 내에서 무작위 위치 계산
-            // 버튼이 화면 밖으로 나가지 않도록 여백(padding) 고려
-            const padding = 100;
+    <script>
+        // --- 0. 날짜 드롭박스 초기화 ---
+        function populateSelects(idPrefix, startYear, endYear) {
+            const yearSelect = document.getElementById(idPrefix + '-year');
+            const monthSelect = document.getElementById(idPrefix + '-month');
+            const daySelect = document.getElementById(idPrefix + '-day');
+
+            for (let i = startYear; i <= endYear; i++) { yearSelect.options.add(new Option(i + '년', i)); }
+            for (let i = 1; i <= 12; i++) { monthSelect.options.add(new Option(i + '월', i)); }
+            for (let i = 1; i <= 31; i++) { daySelect.options.add(new Option(i + '일', i)); }
+            
+            // 초기값 설정 (정답 아님)
+            yearSelect.value = endYear - 1; monthSelect.value = 6; daySelect.value = 15;
+        }
+        populateSelects('birth', 1990, 2010);
+        populateSelects('anni', 2015, 2026);
+
+        // --- 1. 인증 로직 ---
+        function checkDates() {
+            const bY = document.getElementById('birth-year').value;
+            const bM = document.getElementById('birth-month').value;
+            const bD = document.getElementById('birth-day').value;
+            const aY = document.getElementById('anni-year').value;
+            const aM = document.getElementById('anni-month').value;
+            const aD = document.getElementById('anni-day').value;
+
+            // 정답 체크 (모두 문자열로 비교)
+            if (bY === '1998' && bM === '1' && bD === '22' &&
+                aY === '2024' && aM === '11' && aD === '3') {
+                document.getElementById('auth-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('auth-screen').style.display = 'none';
+                    document.getElementById('main-screen').style.display = 'block';
+                }, 400);
+            } else {
+                alert("틀렸습니다!! 정답은 (98년 1월 22일) (24년 11월 3일)");
+            }
+        }
+
+        // --- 2. 드래그 앤 드롭 로직 (모바일/PC 통합) ---
+        const dragTarget = document.getElementById('drag-target');
+        const zoneYes = document.getElementById('zone-yes');
+        const zoneNo = document.getElementById('zone-no');
+        const mainScreen = document.getElementById('main-screen');
+
+        let isDragging = false;
+        let startX, startY;
+        let initialX = 0, initialY = 0; // 초기 위치 저장을 위해 0으로 시작
+
+        // 초기 위치 정보를 저장하는 함수 (화면 로드 후 호출)
+        function setInitialPosition() {
+            const rect = dragTarget.getBoundingClientRect();
+            const parentRect = mainScreen.getBoundingClientRect();
+            initialX = rect.left - parentRect.left;
+            initialY = rect.top - parentRect.top;
+        }
+
+        // 마우스/터치 시작
+        function dragStart(e) {
+            isDragging = true;
+            dragTarget.style.transition = 'none'; // 드래그 중엔 애니메이션 끔
+            if (e.type === 'touchstart') {
+                startX = e.touches[0].clientX - dragTarget.offsetLeft;
+                startY = e.touches[0].clientY - dragTarget.offsetTop;
+            } else {
+                startX = e.clientX - dragTarget.offsetLeft;
+                startY = e.clientY - dragTarget.offsetTop;
+            }
+        }
+
+        // 마우스/터치 이동 (핵심)
+        function dragMove(e) {
+            if (!isDragging) return;
+            e.preventDefault(); // 스크롤 방지
+
+            let currentX, currentY;
+            if (e.type === 'touchmove') {
+                currentX = e.touches[0].clientX - startX;
+                currentY = e.touches[0].clientY - startY;
+            } else {
+                currentX = e.clientX - startX;
+                currentY = e.clientY - startY;
+            }
+
+            dragTarget.style.left = currentX + 'px';
+            dragTarget.style.top = currentY + 'px';
+
+            // '아니오' 버튼 피하기 (이동 시 즉시 체크)
+            if (isOverlapping(dragTarget, zoneNo)) {
+                moveNoButton();
+            }
+
+            // '예' 존 호버 효과
+            if (isOverlapping(dragTarget, zoneYes)) {
+                zoneYes.classList.add('hover');
+            } else {
+                zoneYes.classList.remove('hover');
+            }
+        }
+
+        // 마우스/터치 종료
+        function dragEnd(e) {
+            isDragging = false;
+            dragTarget.style.transition = 'all 0.3s ease'; // 제자리로 갈 땐 부드럽게
+
+            // 겹침 확인
+            if (isOverlapping(dragTarget, zoneYes)) {
+                // 성공! 최종 화면으로
+                document.getElementById('main-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('main-screen').style.display = 'none';
+                    document.getElementById('final-screen').style.display = 'block';
+                }, 400);
+            } else {
+                // 실패: 제자리로
+                dragTarget.style.left = initialX + 'px';
+                dragTarget.style.top = initialY + 'px';
+                zoneYes.classList.remove('hover');
+            }
+        }
+
+        // 두 요소가 겹치는지 확인하는 함수
+        function isOverlapping(el1, el2) {
+            const r1 = el1.getBoundingClientRect();
+            const r2 = el2.getBoundingClientRect();
+            return !(r1.right < r2.left || r1.left > r2.right || r1.bottom < r2.top || r1.top > r2.bottom);
+        }
+
+        // '아니오' 버튼 도망가게 하는 함수 (기존 로직 활용)
+        function moveNoButton() {
+            const padding = 80;
             const x = Math.random() * (window.innerWidth - padding * 2) + padding;
             const y = Math.random() * (window.innerHeight - padding * 2) + padding;
 
-            btnNo.style.position = 'fixed';
-            btnNo.style.left = x + 'px';
-            btnNo.style.top = y + 'px';
-            btnNo.style.marginLeft = '0';
+            zoneNo.style.position = 'fixed';
+            zoneNo.style.left = x + 'px';
+            zoneNo.style.top = y + 'px';
+            zoneNo.style.margin = '0';
         }
 
-        // 데스크톱: 마우스가 접근할 때
-        btnNo.addEventListener('mouseover', moveButton);
-
-        // 모바일: 터치가 시작될 때
-        btnNo.addEventListener('touchstart', (e) => {
-            e.preventDefault(); // 클릭 방지
-            moveButton();
+        // '꼼수 쓰지 마세요 !!!' 처리 (클릭 시)
+        zoneNo.addEventListener('click', () => {
+            alert("꼼수 쓰지 마세요 !!!");
+            moveNoButton(); // 클릭 후에도 도망감
         });
 
-        function accepted() {
-            alert("받아주셔서 감사합니다.");
-            // 이후 추가적인 메시지나 효과를 넣으려면 이 부분에 작성하세요.
-        }
+
+        // 이벤트 리스너 등록
+        dragTarget.addEventListener('touchstart', dragStart);
+        window.addEventListener('touchmove', dragMove, { passive: false });
+        window.addEventListener('touchend', dragEnd);
+
+        dragTarget.addEventListener('mousedown', dragStart);
+        window.addEventListener('mousemove', dragMove);
+        window.addEventListener('mouseup', dragEnd);
+        
+        // 페이지 로드 후 초기 위치 설정
+        window.onload = setInitialPosition;
+
     </script>
 </body>
 </html>

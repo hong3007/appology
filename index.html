@@ -29,8 +29,8 @@
             border-radius: 25px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             width: 90%; max-width: 400px;
-            position: absolute; /* 드래그 구현을 위해 fixed에서 변경 */
-            transition: opacity 0.4s ease;
+            position: absolute;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
         }
 
         h1, h2 {
@@ -80,12 +80,34 @@
             font-size: 1.2rem; font-weight: bold; color: white;
             transition: all 0.2s ease;
         }
-        #zone-yes { background-color: #81C784; /* 초록색 */ border: 3px solid #66BB6A;}
-        #zone-no { background-color: #E57373; /* 빨간색 */ border: 3px solid #EF5350;}
+        #zone-yes { background-color: #81C784; border: 3px solid #66BB6A;}
+        #zone-no { background-color: #E57373; border: 3px solid #EF5350;}
         .drop-zone.hover { transform: scale(1.1); box-shadow: 0 0 10px rgba(0,0,0,0.2); }
 
         /* 3. 최종 완료 화면 스타일 */
-        #final-screen { display: none; z-index: 5; text-align: center;}
+        #final-screen { display: none; z-index: 5; text-align: center; }
+        
+        /* 고양이 이미지 스타일 */
+        #cat-image {
+            width: 150px; height: auto;
+            border-radius: 50%; /* 고양이를 동그랗게 */
+            border: 5px solid var(--main-pink);
+            display: none; /* 처음에 숨김 */
+            margin: 0 auto 1.5rem auto; /* 중앙 배치 및 아래 여백 */
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.1);
+            opacity: 0;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+        }
+
+        /* 띠용~ 애니메이션 효과 */
+        #cat-image.pop-in {
+            display: block;
+            transform: translate(-50%, -50%) scale(1.1); /* 약간 크게 튀어나옴 */
+            opacity: 1;
+        }
+        
         #final-screen p { font-size: 1.1rem; line-height: 1.8; color: var(--text-gray); }
         #final-screen p strong { color: var(--main-pink); font-size: 1.2rem; }
 
@@ -125,6 +147,7 @@
     </div>
 
     <div id="final-screen" class="container">
+        <img id="cat-image" src="cat.png" alt="고양이">
         <h1>💖 사과 수락 완료 💖</h1>
         <p><strong>에옹아</strong> 사과 받아줘서<br>정말 고마워 (하트)</p>
         <p>에옹이 생일이랑 우리 기념일<br>절대로! 안잊어먹을게~~</p>
@@ -160,9 +183,11 @@
             // 정답 체크 (모두 문자열로 비교)
             if (bY === '1998' && bM === '1' && bD === '22' &&
                 aY === '2024' && aM === '11' && aD === '3') {
-                document.getElementById('auth-screen').style.opacity = '0';
+                const authScreen = document.getElementById('auth-screen');
+                authScreen.style.opacity = '0';
+                authScreen.style.visibility = 'hidden'; // 클릭 안 되게 숨김
                 setTimeout(() => {
-                    document.getElementById('auth-screen').style.display = 'none';
+                    authScreen.style.display = 'none';
                     document.getElementById('main-screen').style.display = 'block';
                 }, 400);
             } else {
@@ -239,10 +264,18 @@
             // 겹침 확인
             if (isOverlapping(dragTarget, zoneYes)) {
                 // 성공! 최종 화면으로
-                document.getElementById('main-screen').style.opacity = '0';
+                const mainScreen = document.getElementById('main-screen');
+                mainScreen.style.opacity = '0';
                 setTimeout(() => {
-                    document.getElementById('main-screen').style.display = 'none';
+                    mainScreen.style.display = 'none';
                     document.getElementById('final-screen').style.display = 'block';
+                    // 고양이 띠용~ 애니메이션 트리거
+                    const catImage = document.getElementById('cat-image');
+                    catImage.classList.add('pop-in');
+                    // 애니메이션 후 크기 유지
+                    setTimeout(() => {
+                         catImage.style.transform = 'translate(-50%, -50%) scale(1)';
+                    }, 300);
                 }, 400);
             } else {
                 // 실패: 제자리로

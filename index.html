@@ -32,7 +32,6 @@
             transition: opacity 0.3s ease;
         }
 
-        /* 초기 상태 설정 */
         #auth-screen { display: block; z-index: 30; opacity: 1; }
         #main-screen { display: none; z-index: 20; opacity: 0; }
         #final-screen { display: none; z-index: 10; opacity: 0; }
@@ -45,15 +44,14 @@
         .select-group { display: flex; justify-content: center; gap: 5px; }
         select {
             padding: 10px; border: 2px solid #ddd; border-radius: 10px;
-            font-size: 1rem; color: var(--text-gray);
-            background: white;
+            font-size: 1rem; color: var(--text-gray); background: white;
+            touch-action: auto; /* 드롭박스는 터치 가능하게 */
         }
         button#btn-auth {
             padding: 12px 30px; font-size: 1.1rem; border: none; border-radius: 10px;
             background-color: var(--main-pink); color: white; cursor: pointer;
         }
 
-        /* 드래그 요소 */
         #drag-target-container { width: 80px; height: 80px; margin: 2rem auto; position: relative; }
         #drag-target {
             width: 80px; height: 80px; background-color: #fce4ec;
@@ -72,28 +70,30 @@
         #zone-yes { background-color: #81C784; border: 3px solid #66BB6A; }
         #zone-no { background-color: #E57373; border: 3px solid #EF5350; }
 
-        /* 킹받는 고양이 애니메이션 */
+        /* 고양이 애니메이션 - 더 킹받게 수정 */
         #cat-image {
-            width: 200px; height: auto;
+            width: 250px; height: auto;
             position: fixed; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0);
-            z-index: 100; opacity: 0; pointer-events: none;
+            z-index: 1000; opacity: 0; pointer-events: none;
+            display: none;
         }
 
         .cat-annoying {
-            animation: annoyingPop 2s ease-in-out forwards;
+            display: block !important;
+            animation: annoyingPop 2.2s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
         }
 
         @keyframes annoyingPop {
             0% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-            10% { transform: translate(-50%, -50%) scale(1.2) rotate(-10deg); opacity: 1; }
-            20% { transform: translate(-50%, -50%) scale(1.5) rotate(10deg); }
-            30% { transform: translate(-50%, -50%) scale(1.8) rotate(-20deg); }
-            40% { transform: translate(-50%, -50%) scale(2.0) rotate(20deg); }
-            50% { transform: translate(-50%, -50%) scale(2.2) rotate(-30deg); }
-            60% { transform: translate(-50%, -50%) scale(2.5) rotate(30deg); }
-            80% { transform: translate(-50%, -50%) scale(2.5) rotate(0deg); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(3.0); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.5) rotate(-15deg); opacity: 1; }
+            25% { transform: translate(-50%, -50%) scale(1.2) rotate(15deg); }
+            35% { transform: translate(-50%, -50%) scale(1.8) rotate(-20deg); }
+            45% { transform: translate(-50%, -50%) scale(1.4) rotate(20deg); }
+            55% { transform: translate(-50%, -50%) scale(2.2) rotate(-25deg); }
+            65% { transform: translate(-50%, -50%) scale(1.8) rotate(25deg); }
+            85% { transform: translate(-50%, -50%) scale(2.5) rotate(0deg); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(4.0); opacity: 0; }
         }
     </style>
 </head>
@@ -131,7 +131,6 @@
     </div>
 
     <script>
-        // 드롭박스 생성
         function fill(id, s, e) {
             const el = document.getElementById(id);
             for(let i=s; i<=e; i++) el.options.add(new Option(i+(id.includes('year')?'년':(id.includes('month')?'월':'일')), i));
@@ -169,6 +168,7 @@
         }
 
         function start(e) {
+            if (e.target !== drag) return; // 준영 버튼을 누를 때만 드래그 시작
             isDraging = true;
             const touch = e.touches ? e.touches[0] : e;
             ox = touch.clientX - drag.offsetLeft;
@@ -188,10 +188,13 @@
         }
 
         function end() {
+            if(!isDraging) return; // 핵심 수정: 드래그 중이 아니면 아무것도 안 함 (가드 클로즈)
             isDraging = false;
+
             const dr = drag.getBoundingClientRect();
             const yr = yes.getBoundingClientRect();
             
+            // '예' 영역과 겹치는지 확인
             if(!(dr.right < yr.left || dr.left > yr.right || dr.bottom < yr.top || dr.top > yr.bottom)) {
                 document.getElementById('main-screen').style.display = 'none';
                 const final = document.getElementById('final-screen');
@@ -199,7 +202,7 @@
                 setTimeout(() => final.style.opacity = '1', 50);
                 
                 const cat = document.getElementById('cat-image');
-                cat.classList.add('cat-annoying');
+                cat.classList.add('cat-annoying'); // 드롭 성공 시에만 고양이 등장
             } else {
                 drag.style.left = '0px'; drag.style.top = '0px';
             }
